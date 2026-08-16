@@ -235,20 +235,30 @@ export const FloatingOverlay: React.FC = () => {
               transition: 'border-color 0.6s ease, box-shadow 0.6s ease',
             }}
           >
-            {/* Profile icon */}
-            {isWork
-              ? <Briefcase className="w-4 h-4" style={{ color: dotColor }} />
-              : <User className="w-4 h-4" style={{ color: dotColor }} />
-            }
-
-            {/* Pending count */}
-            {pending.length > 0 && (
+            {isTimerRunning ? (
+              /* Timer running: show MM:SS countdown */
               <span
-                className="text-[9px] font-bold leading-none tabular-nums"
-                style={{ color: dotColor }}
+                className="text-[11px] font-mono font-bold leading-none tabular-nums"
+                style={{ color: dotColor, letterSpacing: '-0.5px' }}
               >
-                {pending.length}
+                {formatTime(timerSecondsRemaining)}
               </span>
+            ) : (
+              /* Idle: profile icon + pending count */
+              <>
+                {isWork
+                  ? <Briefcase className="w-4 h-4" style={{ color: dotColor }} />
+                  : <User className="w-4 h-4" style={{ color: dotColor }} />
+                }
+                {pending.length > 0 && (
+                  <span
+                    className="text-[9px] font-bold leading-none tabular-nums"
+                    style={{ color: dotColor }}
+                  >
+                    {pending.length}
+                  </span>
+                )}
+              </>
             )}
           </div>
 
