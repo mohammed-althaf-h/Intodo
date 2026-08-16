@@ -156,20 +156,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
             </button>
           )}
 
-          {/* Desktop Island View Toggle (in Advanced Mode) */}
-          {isAdvanced && (
-            <button
-              onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
-              className={`p-2 rounded-lg border text-xs transition-colors ${
-                viewMode === 'floating_island'
-                  ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
-                  : 'bg-obsidian-900 border-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-              title="Toggle Desktop Spotlight Island"
-            >
-              <Layers className="w-4 h-4" />
-            </button>
-          )}
+          {/* Minimize / Dock to Floating Dynamic Island Button */}
+          <button
+            onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+              viewMode === 'floating_island'
+                ? 'bg-sky-500 text-obsidian-950 border-sky-400 font-bold shadow-md shadow-sky-500/25'
+                : 'bg-obsidian-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+            }`}
+            title="Minimize to Floating Dynamic Island (Hovers over other apps)"
+          >
+            <Layers className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline">Mini Island</span>
+          </button>
 
           {/* Stealth Mode (in Advanced Mode) */}
           {isAdvanced && (

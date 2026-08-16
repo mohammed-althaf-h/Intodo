@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVaultStore } from '../store/useVaultStore';
 import { Sound } from '../services/soundEngine';
+import { setDesktopIslandMode, startDesktopDrag } from '../services/windowBridge';
 import { Priority } from '../types';
 import { 
   ChevronUp, 
@@ -63,6 +64,7 @@ export const FloatingIsland: React.FC = () => {
   // Drag Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, input, select, form')) return;
+    startDesktopDrag();
     setIsDragging(true);
 
     const currentX = position ? position.x : (window.innerWidth / 2 - 190);
@@ -74,6 +76,12 @@ export const FloatingIsland: React.FC = () => {
       posX: currentX,
       posY: currentY,
     };
+  };
+
+  const handleToggleExpand = (nextExpanded: boolean) => {
+    setIsExpanded(nextExpanded);
+    Sound.playPop();
+    setDesktopIslandMode(true, nextExpanded);
   };
 
   useEffect(() => {
@@ -159,10 +167,7 @@ export const FloatingIsland: React.FC = () => {
 
             {/* Active task title */}
             <div 
-              onClick={() => {
-                setIsExpanded(true);
-                Sound.playPop();
-              }}
+              onClick={() => handleToggleExpand(true)}
               className="flex items-center gap-2 max-w-[200px] truncate text-xs font-semibold text-slate-200 cursor-pointer"
             >
               {activeTask ? (
@@ -195,10 +200,7 @@ export const FloatingIsland: React.FC = () => {
 
             {/* Expand Arrow Button */}
             <button
-              onClick={() => {
-                setIsExpanded(true);
-                Sound.playPop();
-              }}
+              onClick={() => handleToggleExpand(true)}
               className="p-1 text-slate-400 hover:text-white transition-colors"
               title="Expand Dynamic Island"
             >
@@ -257,10 +259,7 @@ export const FloatingIsland: React.FC = () => {
 
                 {/* Collapse to Notch */}
                 <button
-                  onClick={() => {
-                    setIsExpanded(false);
-                    Sound.playPop();
-                  }}
+                  onClick={() => handleToggleExpand(false)}
                   className="p-1 rounded bg-obsidian-900 border border-slate-800 text-slate-400 hover:text-white"
                   title="Collapse to Notch"
                 >
