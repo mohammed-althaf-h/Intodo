@@ -20,6 +20,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation }) => {
   const { 
     activeProfile, 
+    profileVisibility,
     switchProfile, 
     uiMode,
     setUIMode,
@@ -65,32 +66,44 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
             </div>
           </div>
 
-          {/* Profile Switcher Tabs */}
-          <div className="flex items-center p-1 bg-obsidian-900 border border-slate-800 rounded-xl">
-            <button
-              onClick={() => switchProfile('work')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                isWork
-                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              <span>Work</span>
-            </button>
+          {/* Profile Switcher: Dual Tabs or Single Mode Badge */}
+          {profileVisibility === 'both' ? (
+            <div className="flex items-center p-1 bg-obsidian-900 border border-slate-800 rounded-xl">
+              <button
+                onClick={() => switchProfile('work')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  isWork
+                    ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>Work</span>
+              </button>
 
-            <button
-              onClick={() => switchProfile('personal')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                !isWork
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
+              <button
+                onClick={() => switchProfile('personal')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  !isWork
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Personal</span>
+              </button>
+            </div>
+          ) : profileVisibility === 'work_only' ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-900 border border-sky-900/40 rounded-xl text-xs font-semibold text-sky-400">
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Work Tasks</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-900 border border-emerald-900/40 rounded-xl text-xs font-semibold text-emerald-400">
               <User className="w-3.5 h-3.5" />
-              <span>Personal</span>
-            </button>
-          </div>
+              <span>Personal Tasks</span>
+            </div>
+          )}
         </div>
 
         {/* Center: Live Timer if Active (in Advanced Mode) */}

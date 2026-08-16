@@ -20,6 +20,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { 
     uiMode,
     setUIMode,
+    profileVisibility,
+    setProfileVisibility,
     exportEncryptedVault, 
     importEncryptedVault, 
     clearVaultData,
@@ -104,8 +106,72 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6">
           
-          {/* 1. Simple vs Advanced Mode Toggle */}
+          {/* 1. Profile Scope Selection */}
           <div className="space-y-3">
+            <div className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider">
+              Profile Setup & Visibility
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              <button
+                onClick={() => setProfileVisibility('work_only')}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  profileVisibility === 'work_only'
+                    ? 'bg-sky-950/40 border-sky-500 text-white shadow-lg shadow-sky-950/30'
+                    : 'bg-obsidian-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white flex items-center gap-1">
+                    <Briefcase className="w-3.5 h-3.5 text-sky-400" /> Work Only
+                  </span>
+                  {profileVisibility === 'work_only' && <Check className="w-3.5 h-3.5 text-sky-400" />}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  For daily job tasks only.
+                </p>
+              </button>
+
+              <button
+                onClick={() => setProfileVisibility('personal_only')}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  profileVisibility === 'personal_only'
+                    ? 'bg-emerald-950/40 border-emerald-500 text-white shadow-lg shadow-emerald-950/30'
+                    : 'bg-obsidian-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-emerald-400" /> Personal Only
+                  </span>
+                  {profileVisibility === 'personal_only' && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  Life goals & family sharing.
+                </p>
+              </button>
+
+              <button
+                onClick={() => setProfileVisibility('both')}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  profileVisibility === 'both'
+                    ? 'bg-slate-800/80 border-slate-600 text-white shadow-lg'
+                    : 'bg-obsidian-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white">Both Profiles</span>
+                  {profileVisibility === 'both' && <Check className="w-3.5 h-3.5 text-slate-300" />}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  Dual isolated vaults.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Simple vs Advanced Mode Toggle */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
             <div className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider">
               Application View Mode
             </div>

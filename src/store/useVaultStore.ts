@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { TaskItem, ProfileType, Priority, TaskStatus, ViewMode, UIMode } from '../types';
+import { TaskItem, ProfileType, Priority, TaskStatus, ViewMode, UIMode, ProfileVisibility } from '../types';
 import { VaultStorage } from '../services/vaultStorage';
 import { SyncRelay } from '../services/syncRelay';
 import { CryptoEngine } from '../services/cryptoEngine';
 
 interface VaultState {
   activeProfile: ProfileType;
+  profileVisibility: ProfileVisibility;
   uiMode: UIMode;
   workTasks: TaskItem[];
   personalTasks: TaskItem[];
@@ -27,6 +28,7 @@ interface VaultState {
 
   // Actions
   switchProfile: (profile: ProfileType) => void;
+  setProfileVisibility: (visibility: ProfileVisibility) => void;
   setUIMode: (mode: UIMode) => void;
   addTask: (
     title: string,
@@ -141,6 +143,8 @@ if (savedPersonal.length === 0) VaultStorage.saveTasks('personal', personalTasks
 const initialRoomId = 'room_' + Math.random().toString(36).substring(2, 9);
 const initialRoomKey = CryptoEngine.generateRoomSecret();
 const initialUiMode: UIMode = (localStorage.getItem('intodo_ui_mode') as UIMode) || 'simple';
+const initialProfileVisibility: ProfileVisibility = (localStorage.getItem('intodo_profile_visibility') as ProfileVisibility) || 'both';
+const initialActiveProfile: ProfileType = initialProfileVisibility === 'personal_only' ? 'personal' : 'work';
 
 SyncRelay.joinRoom(initialRoomId, initialRoomKey);
 
@@ -153,7 +157,8 @@ export const useVaultStore = create<VaultState>((set, get) => {
   });
 
   return {
-    activeProfile: 'work',
+    activeProfile: initialActiveProfile,
+    profileVisibility: initialProfileVisibility,
     uiMode: initialUiMode,
     workTasks,
     personalTasks,
@@ -172,7 +177,21 @@ export const useVaultStore = create<VaultState>((set, get) => {
     isTimerRunning: false,
 
     switchProfile: (profile) => {
+      const { profileVisibility } = get();
+      if (profileVisibility === 'work_only' && profile !== 'work') return;
+      if (profileVisibility === 'personal_only' && profile !== 'personal') return;
       set({ activeProfile: profile, selectedTag: null });
+    },
+
+    setProfileVisibility: (visibility) => {
+      localStorage.setItem('intodo_profile_visibility', visibility);
+      const updates: Partial<VaultState> = { profileVisibility: visibility, selectedTag: null };
+      if (visibility === 'work_only') {
+        updates.activeProfile = 'work';
+      } else if (visibility === 'personal_only') {
+        updates.activeProfile = 'personal';
+      }
+      set(updates as any);
     },
 
     setUIMode: (mode) => {

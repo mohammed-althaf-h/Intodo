@@ -1,5 +1,7 @@
 export type ProfileType = 'work' | 'personal';
 
+export type ProfileVisibility = 'work_only' | 'personal_only' | 'both';
+
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed';
