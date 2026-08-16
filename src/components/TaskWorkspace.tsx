@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useVaultStore } from '../store/useVaultStore';
+import { Sound } from '../services/soundEngine';
 import { Priority } from '../types';
 import { 
   Plus, 
@@ -458,7 +459,10 @@ export const TaskWorkspace: React.FC = () => {
                   {/* Left: Checkbox + Title */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <button
-                      onClick={() => toggleTask(task.id)}
+                      onClick={() => {
+                        toggleTask(task.id);
+                        Sound.playComplete();
+                      }}
                       className="text-slate-500 hover:text-emerald-400 transition-colors shrink-0"
                       title={isCompleted ? 'Mark Incomplete' : 'Mark Done'}
                     >
