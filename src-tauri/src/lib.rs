@@ -3,12 +3,13 @@ use tauri::{LogicalSize, Window};
 #[tauri::command]
 fn set_island_mode(window: Window, mini: bool, expanded: bool) -> Result<(), String> {
     if mini {
-        let width = 420.0;
-        let height = if expanded { 380.0 } else { 68.0 };
+        let (width, height) = if expanded { (380.0, 480.0) } else { (64.0, 64.0) };
         let _ = window.set_always_on_top(true);
+        let _ = window.set_decorations(false);
         let _ = window.set_size(LogicalSize::new(width, height));
     } else {
         let _ = window.set_always_on_top(false);
+        let _ = window.set_decorations(true);
         let _ = window.set_size(LogicalSize::new(1080.0, 760.0));
         let _ = window.center();
     }

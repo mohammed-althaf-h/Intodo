@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useVaultStore } from './store/useVaultStore';
 import { Header } from './components/Header';
 import { TaskWorkspace } from './components/TaskWorkspace';
-import { FloatingIsland } from './components/FloatingIsland';
+import { AssistiveOrb } from './components/AssistiveOrb';
 import { DelegationModal } from './components/DelegationModal';
 import { SettingsModal } from './components/SettingsModal';
 
@@ -63,6 +63,15 @@ export const App: React.FC = () => {
   const isWork = activeProfile === 'work';
   const isAdvanced = uiMode === 'advanced';
 
+  // In Floating Island Mode: Render ONLY the floating AssistiveTouch dot on transparent canvas
+  if (viewMode === 'floating_island') {
+    return (
+      <div className="w-full h-full bg-transparent overflow-hidden select-none">
+        <AssistiveOrb />
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       isWork ? 'bg-obsidian-950 text-slate-100' : 'bg-[#03110C] text-slate-100'
@@ -79,9 +88,6 @@ export const App: React.FC = () => {
         <TaskWorkspace />
       </main>
 
-      {/* Ambient Floating Spotlight / Island Widget */}
-      {viewMode === 'floating_island' && <FloatingIsland />}
-
       {/* Collaborative Delegation Modal (Personal Sharing) */}
       <DelegationModal
         isOpen={isDelegationOpen}
@@ -94,20 +100,16 @@ export const App: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
       />
 
-      {/* Floating Island Shortcut Floating Button (In Advanced Mode) */}
+      {/* Floating Dot Quick Trigger Floating Button (In Advanced Mode) */}
       {isAdvanced && (
         <div className="fixed bottom-4 right-4 z-40">
           <button
-            onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-xl border text-xs font-semibold shadow-xl transition-all ${
-              viewMode === 'floating_island'
-                ? 'bg-sky-500 text-obsidian-950 border-sky-400 font-bold shadow-sky-500/30'
-                : 'bg-obsidian-900/90 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:text-white'
-            }`}
-            title="Toggle Floating Desktop Widget (Shortcut: Ctrl + Shift + Space)"
+            onClick={() => setViewMode('floating_island')}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-xl border text-xs font-semibold shadow-xl transition-all bg-obsidian-900/90 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:text-white"
+            title="Transform to Floating AssistiveTouch Dot (Shortcut: Ctrl + Shift + Space)"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>{viewMode === 'floating_island' ? 'Dock Island' : 'Spotlight Island'}</span>
+            <span className={`w-2 h-2 rounded-full ${isWork ? 'bg-sky-400' : 'bg-emerald-400'} animate-pulse`} />
+            <span>Floating Dot</span>
             <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-obsidian-950 text-[10px] text-slate-400 font-mono border border-slate-700">
               Ctrl+Shift+Space
             </kbd>
