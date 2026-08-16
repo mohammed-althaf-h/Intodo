@@ -408,3 +408,18 @@ export const useVaultStore = create<VaultState>((set, get) => {
     }
   };
 });
+
+/**
+ * Cross-window sync: when the OTHER Tauri window (overlay ↔ main) writes to
+ * localStorage, the browser fires a `storage` event here. Re-read both vaults
+ * and push the fresh data into the Zustand store so both windows stay in sync.
+ *
+ * ponytail: uses the platform's built-in storage event — zero deps, zero polling.
+ */
+window.addEventListener('storage', (e) => {
+  if (!e.key?.startsWith('intodo_vault_')) return;
+  useVaultStore.setState({
+    workTasks: VaultStorage.loadTasks('work'),
+    personalTasks: VaultStorage.loadTasks('personal'),
+  });
+});
