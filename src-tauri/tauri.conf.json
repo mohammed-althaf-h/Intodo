@@ -15,12 +15,10 @@
         "title": "Intodo",
         "width": 1080,
         "height": 760,
-        "minWidth": 60,
-        "minHeight": 60,
+        "minWidth": 460,
+        "minHeight": 540,
         "resizable": true,
-        "fullscreen": false,
-        "transparent": true,
-        "shadow": false
+        "fullscreen": false
       }
     ],
     "security": {

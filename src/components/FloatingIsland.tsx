@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVaultStore } from '../store/useVaultStore';
 import { Sound } from '../services/soundEngine';
-import { setDesktopIslandMode, startDesktopDrag } from '../services/windowBridge';
 import { Priority } from '../types';
 import { 
   ChevronUp, 
@@ -63,8 +62,7 @@ export const FloatingIsland: React.FC = () => {
 
   // Drag Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('button, input, select, form')) return;
-    startDesktopDrag();
+    if ((e.target as HTMLElement).closest('button, input, select, form, .no-drag')) return;
     setIsDragging(true);
 
     const currentX = position ? position.x : (window.innerWidth / 2 - 190);
@@ -81,7 +79,6 @@ export const FloatingIsland: React.FC = () => {
   const handleToggleExpand = (nextExpanded: boolean) => {
     setIsExpanded(nextExpanded);
     Sound.playPop();
-    setDesktopIslandMode(true, nextExpanded);
   };
 
   useEffect(() => {

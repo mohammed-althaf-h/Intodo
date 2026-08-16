@@ -155,18 +155,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
             </button>
           )}
 
-          {/* Minimize / Dock to Floating AssistiveTouch Dot Button */}
+          {/* Toggle Floating Spotlight Island Button */}
           <button
             onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
               viewMode === 'floating_island'
                 ? 'bg-sky-500 text-obsidian-950 border-sky-400 font-bold shadow-md shadow-sky-500/25'
                 : 'bg-obsidian-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
             }`}
-            title="Transform into Floating AssistiveTouch Dot (Hovers over other apps)"
+            title="Toggle Floating Spotlight Island (Shortcut: Ctrl + Shift + Space)"
           >
             <span className={`w-2 h-2 rounded-full ${isWork ? 'bg-sky-400' : 'bg-emerald-400'} animate-pulse`} />
-            <span className="hidden sm:inline">Floating Dot</span>
+            <span className="hidden sm:inline">Spotlight Island</span>
           </button>
 
           {/* Stealth Mode (in Advanced Mode) */}
