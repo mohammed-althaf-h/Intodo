@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useVaultStore } from '../store/useVaultStore';
 import { Priority } from '../types';
-import { showMainBoard, setOverlaySize } from '../services/windowBridge';
+import { showMainBoard, setOverlaySize, isTauri } from '../services/windowBridge';
 import { Sound } from '../services/soundEngine';
 import {
   Check, Plus, Play, Pause, RotateCcw, Maximize2,
@@ -56,18 +56,57 @@ export const FloatingOverlay: React.FC = () => {
   }, [isTimerRunning, tickTimer]);
 
   // Idle fade: after 4 s of no interaction on the dot, go semi-transparent
-  const resetIdle = () => {
+  const resetIdle = useCallback(() => {
     setIdle(false);
     if (idleTimer.current) clearTimeout(idleTimer.current);
     if (!isOpen) {
       idleTimer.current = window.setTimeout(() => setIdle(true), 4000);
     }
-  };
+  }, [isOpen]);
 
   useEffect(() => {
     resetIdle();
     return () => { if (idleTimer.current) clearTimeout(idleTimer.current); };
-  }, [isOpen]);
+  }, [isOpen, resetIdle]);
+
+  /**
+   * Drag-or-click handler for the collapsed dot.
+   * Drag threshold: 5px movement → startDragging() (native OS window move).
+   * No movement → treated as a click → open panel.
+   * This avoids data-tauri-drag-region which intercepts ALL mousedowns.
+   */
+  const handleDotMouseDown = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let dragged = false;
+
+    const onMove = async (mv: MouseEvent) => {
+      if (dragged) return;
+      if (Math.abs(mv.clientX - startX) > 5 || Math.abs(mv.clientY - startY) > 5) {
+        dragged = true;
+        if (isTauri()) {
+          try {
+            const { getCurrentWindow } = await import('@tauri-apps/api/window');
+            await getCurrentWindow().startDragging();
+          } catch { /* non-fatal */ }
+        }
+      }
+    };
+
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (!dragged) {
+        // It was a tap/click — open the panel
+        setIsOpen(true);
+        Sound.playPop();
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, []);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
@@ -91,7 +130,7 @@ export const FloatingOverlay: React.FC = () => {
       >
         {/* The dot — draggable via Tauri native drag, click to open */}
         <div
-          data-tauri-drag-region
+            onMouseDown={handleDotMouseDown}
           onMouseEnter={resetIdle}
           onMouseMove={resetIdle}
           style={{
@@ -110,10 +149,9 @@ export const FloatingOverlay: React.FC = () => {
             }}
           />
 
-          {/* Main circle */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="relative z-10 w-14 h-14 rounded-full border-2 flex flex-col items-center justify-center gap-0.5 transition-transform active:scale-95"
+          {/* Main circle (pointer-events-none — parent handles all input) */}
+          <div
+            className="relative z-10 w-14 h-14 rounded-full border-2 flex flex-col items-center justify-center gap-0.5 pointer-events-none"
             style={{
               background: isWork
                 ? 'linear-gradient(135deg, #0c1a2e 0%, #0f2544 100%)'
@@ -147,7 +185,7 @@ export const FloatingOverlay: React.FC = () => {
                 }}
               />
             )}
-          </button>
+          </div>
         </div>
       </div>
     );
