@@ -5,6 +5,8 @@ node_modules/
 
 # Production build
 dist/
+Intodo.exe
+src-tauri/target/
 
 # Logs
 npm-debug.log*
