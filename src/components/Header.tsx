@@ -8,7 +8,7 @@ import {
   Share2, 
   Settings, 
   Clock,
-  Sparkles
+  Sparkles 
 } from 'lucide-react';
 
 interface HeaderProps {

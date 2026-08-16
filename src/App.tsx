@@ -3,19 +3,45 @@ import { useVaultStore } from './store/useVaultStore';
 import { Header } from './components/Header';
 import { TaskWorkspace } from './components/TaskWorkspace';
 import { FloatingIsland } from './components/FloatingIsland';
+import { FloatingOverlay } from './components/FloatingOverlay';
 import { DelegationModal } from './components/DelegationModal';
 import { SettingsModal } from './components/SettingsModal';
+import { getWindowLabel } from './services/windowBridge';
 
+/**
+ * App root — detects which Tauri window we are running in.
+ * "overlay" window renders FloatingOverlay (borderless, always-on-top).
+ * "main" or browser renders the full board.
+ */
 export const App: React.FC = () => {
-  const { 
-    activeProfile, 
+  // null = detecting, 'main'/'overlay'/'browser' = resolved
+  const [windowLabel, setWindowLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    getWindowLabel().then(setWindowLabel);
+  }, []);
+
+  // Avoid flicker: render nothing until we know which window we are
+  if (windowLabel === null) return null;
+
+  if (windowLabel === 'overlay') {
+    return <FloatingOverlay />;
+  }
+
+  return <MainApp />;
+};
+
+/** Full main board — only rendered in the "main" window. */
+const MainApp: React.FC = () => {
+  const {
+    activeProfile,
     uiMode,
-    viewMode, 
-    setViewMode, 
+    viewMode,
+    setViewMode,
     toggleStealthMode,
     switchProfile,
     isTimerRunning,
-    tickTimer
+    tickTimer,
   } = useVaultStore();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -23,39 +49,27 @@ export const App: React.FC = () => {
 
   // Timer interval
   useEffect(() => {
-    let interval: number | null = null;
-    if (isTimerRunning) {
-      interval = window.setInterval(() => {
-        tickTimer();
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    if (!isTimerRunning) return;
+    const interval = window.setInterval(tickTimer, 1000);
+    return () => clearInterval(interval);
   }, [isTimerRunning, tickTimer]);
 
-  // Global Keyboard Shortcuts
+  // Global keyboard shortcuts (main window only)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle Floating Island: Ctrl + Shift + Space or Alt + Space
       if ((e.ctrlKey && e.shiftKey && e.code === 'Space') || (e.altKey && e.code === 'Space')) {
         e.preventDefault();
         setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island');
       }
-
-      // Toggle Stealth Mode: Ctrl + Shift + S
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
         toggleStealthMode();
       }
-
-      // Toggle Profile: Ctrl + Shift + P
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         switchProfile(activeProfile === 'work' ? 'personal' : 'work');
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewMode, activeProfile, setViewMode, toggleStealthMode, switchProfile]);
@@ -67,34 +81,19 @@ export const App: React.FC = () => {
     <div className={`min-h-screen transition-colors duration-300 ${
       isWork ? 'bg-obsidian-950 text-slate-100' : 'bg-[#03110C] text-slate-100'
     }`}>
-      
-      {/* Top Header */}
       <Header
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenDelegation={() => setIsDelegationOpen(true)}
       />
-
-      {/* Main Workspace Board */}
       <main className="pb-16">
         <TaskWorkspace />
       </main>
 
-      {/* Floating Dynamic Island HUD Widget (Always interactive and accessible) */}
       {viewMode === 'floating_island' && <FloatingIsland />}
 
-      {/* Collaborative Delegation Modal (Personal Sharing) */}
-      <DelegationModal
-        isOpen={isDelegationOpen}
-        onClose={() => setIsDelegationOpen(false)}
-      />
+      <DelegationModal isOpen={isDelegationOpen} onClose={() => setIsDelegationOpen(false)} />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
-      {/* Settings & Cryptographic Backup Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      {/* Floating Island Shortcut Floating Button (In Advanced Mode) */}
       {isAdvanced && (
         <div className="fixed bottom-4 right-4 z-40">
           <button
@@ -104,13 +103,10 @@ export const App: React.FC = () => {
                 ? 'bg-sky-500 text-obsidian-950 border-sky-400 font-bold shadow-sky-500/30'
                 : 'bg-obsidian-900/90 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:text-white'
             }`}
-            title="Toggle Floating Spotlight Island (Shortcut: Ctrl + Shift + Space)"
+            title="Toggle Floating Spotlight Island (Ctrl+Shift+Space)"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>{viewMode === 'floating_island' ? 'Dock Island' : 'Spotlight Island'}</span>
-            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-obsidian-950 text-[10px] text-slate-400 font-mono border border-slate-700">
-              Ctrl+Shift+Space
-            </kbd>
           </button>
         </div>
       )}

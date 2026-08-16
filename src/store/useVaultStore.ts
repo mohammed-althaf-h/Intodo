@@ -3,7 +3,6 @@ import { TaskItem, ProfileType, Priority, TaskStatus, ViewMode, UIMode, ProfileV
 import { VaultStorage } from '../services/vaultStorage';
 import { SyncRelay } from '../services/syncRelay';
 import { CryptoEngine } from '../services/cryptoEngine';
-import { setDesktopIslandMode } from '../services/windowBridge';
 
 interface VaultState {
   activeProfile: ProfileType;
@@ -338,10 +337,7 @@ export const useVaultStore = create<VaultState>((set, get) => {
     setFilterStatus: (status) => set({ filterStatus: status }),
     setSearchQuery: (query) => set({ searchQuery: query }),
     setSelectedTag: (tag) => set({ selectedTag: tag }),
-    setViewMode: (mode) => {
-      set({ viewMode: mode });
-      setDesktopIslandMode(mode === 'floating_island', false);
-    },
+    setViewMode: (mode) => set({ viewMode: mode }),
     toggleStealthMode: () => set((state) => ({ stealthMode: !state.stealthMode })),
 
     generateNewRoom: () => {
