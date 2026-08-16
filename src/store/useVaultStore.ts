@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { TaskItem, ProfileType, Priority, TaskStatus, ViewMode } from '../types';
+import { TaskItem, ProfileType, Priority, TaskStatus, ViewMode, UIMode } from '../types';
 import { VaultStorage } from '../services/vaultStorage';
 import { SyncRelay } from '../services/syncRelay';
 import { CryptoEngine } from '../services/cryptoEngine';
 
 interface VaultState {
   activeProfile: ProfileType;
+  uiMode: UIMode;
   workTasks: TaskItem[];
   personalTasks: TaskItem[];
   delegationInbox: TaskItem[];
@@ -15,7 +16,7 @@ interface VaultState {
   viewMode: ViewMode;
   stealthMode: boolean;
   
-  // Delegation room credentials
+  // Delegation room credentials (for personal sharing)
   roomId: string;
   roomKey: string;
 
@@ -26,6 +27,7 @@ interface VaultState {
 
   // Actions
   switchProfile: (profile: ProfileType) => void;
+  setUIMode: (mode: UIMode) => void;
   addTask: (
     title: string,
     priority?: Priority,
@@ -64,69 +66,66 @@ interface VaultState {
   clearVaultData: () => void;
 }
 
-// Initial tasks with helpful demo content
+// Work-specific initial tasks (focused on memory & never forgetting corporate tasks)
 const initialWorkTasks: TaskItem[] = [
   {
     id: 'w-1',
-    title: 'Review Q3 Security & EDR Audit Checklist',
-    description: 'Ensure all user-space executables comply with Zero-Privilege corporate policies.',
-    profile: 'work',
-    status: 'in_progress',
-    priority: 'high',
-    dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    tags: ['security', 'compliance'],
-    estimatedMinutes: 45,
-    createdAt: Date.now() - 3600000,
-    subtasks: [
-      { id: 's1', title: 'Verify no global DLL hooks in binary', completed: true },
-      { id: 's2', title: 'Audit port 443 HTTPS WSS egress', completed: true },
-      { id: 's3', title: 'Test user-mode portable launch', completed: false },
-    ],
-  },
-  {
-    id: 'w-2',
-    title: 'Sync with Dev Team on Task Delegation API',
-    description: 'Provide team lead with our zero-knowledge room code so pending tasks land in our inbox.',
+    title: 'Submit weekly sprint deliverable status report',
+    description: 'Ensure deliverables are marked and reviewed for Friday standup.',
     profile: 'work',
     status: 'pending',
     priority: 'urgent',
     dueDate: new Date().toISOString().split('T')[0],
-    tags: ['delegation', 'sync'],
+    tags: ['deliverables', 'standup'],
     estimatedMinutes: 20,
+    createdAt: Date.now() - 3600000,
+    subtasks: [
+      { id: 's1', title: 'Verify commit log on main branch', completed: true },
+      { id: 's2', title: 'Fill in standup summary notes', completed: false }
+    ],
+  },
+  {
+    id: 'w-2',
+    title: 'Review production monitoring & performance alerts',
+    description: 'Verify error rate is below 0.1% and no latency regressions.',
+    profile: 'work',
+    status: 'pending',
+    priority: 'high',
+    dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    tags: ['monitoring', 'ops'],
+    estimatedMinutes: 30,
     createdAt: Date.now() - 7200000,
-    delegatedBy: 'Sarah (Lead Eng)',
-    delegatedNote: 'Althaf, please prioritize this before the 3pm sprint demo.',
     subtasks: [],
   }
 ];
 
+// Personal tasks with sharing/delegation
 const initialPersonalTasks: TaskItem[] = [
   {
     id: 'p-1',
-    title: 'Order new ergonomic split mechanical keyboard',
-    description: 'Check reviews on low-profile wireless boards with quiet switches.',
+    title: 'Pick up organic grocery order & fresh sourdough',
+    description: 'Remember the decaf coffee beans and oat milk.',
     profile: 'personal',
     status: 'pending',
     priority: 'medium',
-    tags: ['gear', 'shopping'],
-    estimatedMinutes: 15,
+    dueDate: new Date().toISOString().split('T')[0],
+    tags: ['shopping', 'home'],
+    estimatedMinutes: 25,
     createdAt: Date.now() - 86400000,
+    delegatedBy: 'Family Member',
+    delegatedNote: 'Please grab the sourdough before the bakery closes at 6pm!',
     subtasks: [],
   },
   {
     id: 'p-2',
-    title: 'Weekend 10km trail run & hydration prep',
+    title: 'Schedule dentist checkup for next month',
     profile: 'personal',
     status: 'pending',
     priority: 'low',
-    dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-    tags: ['fitness', 'health'],
-    estimatedMinutes: 60,
+    tags: ['health'],
+    estimatedMinutes: 15,
     createdAt: Date.now() - 43200000,
-    subtasks: [
-      { id: 's4', title: 'Charge GPS watch', completed: true },
-      { id: 's5', title: 'Pack electrolytes', completed: false }
-    ],
+    subtasks: [],
   }
 ];
 
@@ -141,19 +140,21 @@ if (savedPersonal.length === 0) VaultStorage.saveTasks('personal', personalTasks
 
 const initialRoomId = 'room_' + Math.random().toString(36).substring(2, 9);
 const initialRoomKey = CryptoEngine.generateRoomSecret();
+const initialUiMode: UIMode = (localStorage.getItem('intodo_ui_mode') as UIMode) || 'simple';
 
 SyncRelay.joinRoom(initialRoomId, initialRoomKey);
 
 export const useVaultStore = create<VaultState>((set, get) => {
-  // Wire up incoming delegated tasks
+  // Wire up incoming delegated tasks (routed to Personal vault)
   SyncRelay.onTaskReceived((incomingTask) => {
     set((state) => ({
-      delegationInbox: [incomingTask, ...state.delegationInbox],
+      delegationInbox: [{ ...incomingTask, profile: 'personal' }, ...state.delegationInbox],
     }));
   });
 
   return {
     activeProfile: 'work',
+    uiMode: initialUiMode,
     workTasks,
     personalTasks,
     delegationInbox: [],
@@ -172,6 +173,11 @@ export const useVaultStore = create<VaultState>((set, get) => {
 
     switchProfile: (profile) => {
       set({ activeProfile: profile, selectedTag: null });
+    },
+
+    setUIMode: (mode) => {
+      localStorage.setItem('intodo_ui_mode', mode);
+      set({ uiMode: mode });
     },
 
     addTask: (title, priority = 'medium', tags = [], dueDate, description, estimatedMinutes) => {
@@ -256,7 +262,7 @@ export const useVaultStore = create<VaultState>((set, get) => {
       const targetList = activeProfile === 'work' ? workTasks : personalTasks;
       const updated = targetList.map((t) => {
         if (t.id === taskId) {
-          const newSub: { id: string; title: string; completed: boolean } = {
+          const newSub = {
             id: 'sub_' + Math.random().toString(36).substring(2, 8),
             title,
             completed: false,
@@ -323,13 +329,14 @@ export const useVaultStore = create<VaultState>((set, get) => {
     },
 
     acceptDelegatedTask: (task) => {
-      const { workTasks, delegationInbox } = get();
-      const updatedWork = [task, ...workTasks];
+      const { personalTasks, delegationInbox } = get();
+      const acceptedTask: TaskItem = { ...task, profile: 'personal' };
+      const updatedPersonal = [acceptedTask, ...personalTasks];
       const updatedInbox = delegationInbox.filter((t) => t.id !== task.id);
       
-      VaultStorage.saveTasks('work', updatedWork);
+      VaultStorage.saveTasks('personal', updatedPersonal);
       set({
-        workTasks: updatedWork,
+        personalTasks: updatedPersonal,
         delegationInbox: updatedInbox,
       });
     },

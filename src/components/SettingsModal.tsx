@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useVaultStore } from '../store/useVaultStore';
 import { 
   X, 
-  ShieldCheck, 
   Download, 
   Upload, 
   Check, 
-  FileText
+  FileText,
+  Sliders,
+  Briefcase,
+  User
 } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -16,6 +18,8 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { 
+    uiMode,
+    setUIMode,
     exportEncryptedVault, 
     importEncryptedVault, 
     clearVaultData,
@@ -75,17 +79,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian-950/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-obsidian-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
+      <div className="w-full max-w-xl max-h-[90vh] flex flex-col bg-obsidian-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-obsidian-950/50">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400">
-              <ShieldCheck className="w-5 h-5" />
+              <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Vault Security & Settings</h2>
-              <p className="text-xs text-slate-400">Enterprise Compliance & Encrypted Backups</p>
+              <h2 className="text-base font-bold text-white">Intodo Settings & Modes</h2>
+              <p className="text-xs text-slate-400">UI Complexity & Cryptographic Vault</p>
             </div>
           </div>
 
@@ -100,39 +104,66 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         {/* Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6">
           
-          {/* EDR & Enterprise Audit Status */}
-          <div className="p-4 rounded-xl bg-obsidian-950 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider">
-                EDR / XDR Compliance Audit
-              </span>
-              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                100% CLEAN
-              </span>
+          {/* 1. Simple vs Advanced Mode Toggle */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider">
+              Application View Mode
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>Zero Admin Rights Required</span>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setUIMode('simple')}
+                className={`p-3.5 rounded-xl border text-left transition-all ${
+                  uiMode === 'simple'
+                    ? 'bg-sky-950/40 border-sky-500 text-white shadow-lg shadow-sky-950/30'
+                    : 'bg-obsidian-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-bold text-white">Simple Mode</span>
+                  {uiMode === 'simple' && <Check className="w-4 h-4 text-sky-400" />}
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Clean, zero-distraction daily task checklist. Type and press enter.
+                </p>
+              </button>
+
+              <button
+                onClick={() => setUIMode('advanced')}
+                className={`p-3.5 rounded-xl border text-left transition-all ${
+                  uiMode === 'advanced'
+                    ? 'bg-sky-950/40 border-sky-500 text-white shadow-lg shadow-sky-950/30'
+                    : 'bg-obsidian-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-bold text-white">Advanced Mode</span>
+                  {uiMode === 'advanced' && <Check className="w-4 h-4 text-sky-400" />}
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Pomodoro timer, subtask checklists, desktop spotlight island, stealth mode.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Work vs Personal Profile Separation Info */}
+          <div className="p-3.5 rounded-xl bg-obsidian-950 border border-slate-800 space-y-2 text-xs">
+            <div className="font-bold text-slate-300">Profile Partitions:</div>
+            <div className="space-y-1.5 text-slate-400">
+              <div className="flex items-start gap-2">
+                <Briefcase className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                <span><strong>Work Vault:</strong> Dedicated personal task engine to never forget work items. 100% offline, zero corporate risk.</span>
               </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>User-space execution only</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>No global DLL / keyboard hooks</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>Strict TLS 1.3 over HTTPS/WSS (443)</span>
+              <div className="flex items-start gap-2">
+                <User className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span><strong>Personal Vault:</strong> Daily life chores + collaborative room link for family/friends to drop requests.</span>
               </div>
             </div>
           </div>
 
-          {/* Backup & Export Section */}
-          <div className="space-y-3">
+          {/* 3. Encrypted Backup Export */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
             <div className="flex items-center gap-2 text-sm font-bold text-white">
               <Download className="w-4 h-4 text-sky-400" />
               <span>Export Encrypted Vault Backup</span>
@@ -155,7 +186,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   disabled={!exportPassphrase}
                   className="px-4 py-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-obsidian-950 text-xs font-bold rounded-lg transition-colors"
                 >
-                  Generate Backup
+                  Export
                 </button>
               </div>
             </form>
@@ -163,7 +194,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             {exportedString && (
               <div className="p-3 rounded-xl bg-obsidian-950 border border-slate-800 space-y-2 animate-slide-up">
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>AES-256-GCM Encrypted Payload:</span>
+                  <span>Encrypted Backup String:</span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleCopyBackup}
@@ -183,7 +214,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </div>
                 <textarea
                   readOnly
-                  rows={3}
+                  rows={2}
                   value={exportedString}
                   className="w-full bg-obsidian-900 border border-slate-800 rounded-lg p-2 text-[10px] font-mono text-slate-300 focus:outline-none"
                 />
@@ -191,8 +222,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             )}
           </div>
 
-          {/* Import Backup Section */}
-          <div className="space-y-3 pt-4 border-t border-slate-800">
+          {/* 4. Restore Backup */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
             <div className="flex items-center gap-2 text-sm font-bold text-white">
               <Upload className="w-4 h-4 text-emerald-400" />
               <span>Restore Encrypted Backup</span>
@@ -220,7 +251,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   disabled={!importString || !importPassphrase}
                   className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-obsidian-950 text-xs font-bold rounded-lg transition-colors"
                 >
-                  Restore Vaults
+                  Restore
                 </button>
               </div>
             </form>
@@ -236,12 +267,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             )}
           </div>
 
-          {/* Danger Zone */}
-          <div className="pt-4 border-t border-slate-800 space-y-2">
+          {/* 5. Wipe Data */}
+          <div className="pt-3 border-t border-slate-800 space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-red-400">Wipe Local Vaults</div>
-                <div className="text-[11px] text-slate-500">Permanently clears all tasks from this device.</div>
+                <div className="text-xs font-bold text-red-400">Clear Local Vaults</div>
+                <div className="text-[11px] text-slate-500">Reset local tasks on this machine.</div>
               </div>
 
               {!showClearConfirm ? (
@@ -249,7 +280,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   onClick={() => setShowClearConfirm(true)}
                   className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-medium rounded-lg transition-colors"
                 >
-                  Clear Data
+                  Clear
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -266,12 +297,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     }}
                     className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors"
                   >
-                    Confirm Wipe
+                    Confirm
                   </button>
                 </div>
               )}
             </div>
           </div>
+
         </div>
       </div>
     </div>

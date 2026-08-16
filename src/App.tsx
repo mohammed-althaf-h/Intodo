@@ -9,6 +9,7 @@ import { SettingsModal } from './components/SettingsModal';
 export const App: React.FC = () => {
   const { 
     activeProfile, 
+    uiMode,
     viewMode, 
     setViewMode, 
     toggleStealthMode,
@@ -60,6 +61,7 @@ export const App: React.FC = () => {
   }, [viewMode, activeProfile, setViewMode, toggleStealthMode, switchProfile]);
 
   const isWork = activeProfile === 'work';
+  const isAdvanced = uiMode === 'advanced';
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
@@ -80,7 +82,7 @@ export const App: React.FC = () => {
       {/* Ambient Floating Spotlight / Island Widget */}
       {viewMode === 'floating_island' && <FloatingIsland />}
 
-      {/* Collaborative Delegation Modal */}
+      {/* Collaborative Delegation Modal (Personal Sharing) */}
       <DelegationModal
         isOpen={isDelegationOpen}
         onClose={() => setIsDelegationOpen(false)}
@@ -92,24 +94,26 @@ export const App: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
       />
 
-      {/* Floating Island Shortcut Floating Button (Desktop Quick Toggle) */}
-      <div className="fixed bottom-4 right-4 z-40">
-        <button
-          onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-xl border text-xs font-semibold shadow-xl transition-all ${
-            viewMode === 'floating_island'
-              ? 'bg-sky-500 text-obsidian-950 border-sky-400 font-bold shadow-sky-500/30'
-              : 'bg-obsidian-900/90 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:text-white'
-          }`}
-          title="Toggle Floating Desktop Widget (Shortcut: Ctrl + Shift + Space)"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>{viewMode === 'floating_island' ? 'Dock Island' : 'Spotlight Island'}</span>
-          <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-obsidian-950 text-[10px] text-slate-400 font-mono border border-slate-700">
-            Ctrl+Shift+Space
-          </kbd>
-        </button>
-      </div>
+      {/* Floating Island Shortcut Floating Button (In Advanced Mode) */}
+      {isAdvanced && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <button
+            onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur-xl border text-xs font-semibold shadow-xl transition-all ${
+              viewMode === 'floating_island'
+                ? 'bg-sky-500 text-obsidian-950 border-sky-400 font-bold shadow-sky-500/30'
+                : 'bg-obsidian-900/90 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:text-white'
+            }`}
+            title="Toggle Floating Desktop Widget (Shortcut: Ctrl + Shift + Space)"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{viewMode === 'floating_island' ? 'Dock Island' : 'Spotlight Island'}</span>
+            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-obsidian-950 text-[10px] text-slate-400 font-mono border border-slate-700">
+              Ctrl+Shift+Space
+            </kbd>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

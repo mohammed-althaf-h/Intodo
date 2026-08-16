@@ -5,11 +5,11 @@ import {
   User, 
   Eye, 
   EyeOff, 
-  AppWindow, 
   Layers, 
-  Send, 
+  Share2, 
   Settings, 
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -21,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
   const { 
     activeProfile, 
     switchProfile, 
+    uiMode,
+    setUIMode,
     stealthMode, 
     toggleStealthMode,
     viewMode,
@@ -33,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
   } = useVaultStore();
 
   const isWork = activeProfile === 'work';
+  const isAdvanced = uiMode === 'advanced';
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -42,10 +45,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-xl border-b border-slate-800/80 bg-obsidian-950/80 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         
         {/* Brand & Profile Switcher */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg shadow-lg transition-all duration-300 ${
               isWork 
@@ -57,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
             <div className="hidden sm:block">
               <span className="font-bold tracking-tight text-white text-base">Intodo</span>
               <span className="ml-1.5 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700/60">
-                EDR-Safe
+                {isWork ? 'Work Focus' : 'Personal & Share'}
               </span>
             </div>
           </div>
@@ -66,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
           <div className="flex items-center p-1 bg-obsidian-900 border border-slate-800 rounded-xl">
             <button
               onClick={() => switchProfile('work')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                 isWork
                   ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -78,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
 
             <button
               onClick={() => switchProfile('personal')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                 !isWork
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -90,8 +93,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
           </div>
         </div>
 
-        {/* Center: Live Timer if Active */}
-        {isTimerRunning && (
+        {/* Center: Live Timer if Active (in Advanced Mode) */}
+        {isAdvanced && isTimerRunning && (
           <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-sky-950/40 border border-sky-500/30 text-sky-300 rounded-full text-xs font-mono animate-pulse">
             <Clock className="w-3.5 h-3.5 text-sky-400" />
             <span>Focus: {formatTime(timerSecondsRemaining)}</span>
@@ -113,64 +116,68 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onOpenDelegation
         {/* Right Actions */}
         <div className="flex items-center gap-2">
           
-          {/* View Mode Toggle */}
-          <div className="hidden lg:flex items-center p-1 bg-obsidian-900 border border-slate-800 rounded-lg text-xs">
-            <button
-              onClick={() => setViewMode('workspace')}
-              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
-                viewMode === 'workspace' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Full Workspace"
-            >
-              <AppWindow className="w-3.5 h-3.5" />
-              <span>Workspace</span>
-            </button>
-
-            <button
-              onClick={() => setViewMode('floating_island')}
-              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
-                viewMode === 'floating_island' ? 'bg-slate-800 text-sky-300 font-medium' : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Floating Spotlight Island"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Desktop Island</span>
-            </button>
-          </div>
-
-          {/* Delegation Button & Badge */}
+          {/* Quick UI Mode Toggle Pill */}
           <button
-            onClick={onOpenDelegation}
-            className="relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-obsidian-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-all shadow-sm"
-            title="Collaborative Task Delegation"
+            onClick={() => setUIMode(isAdvanced ? 'simple' : 'advanced')}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono rounded-lg bg-obsidian-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
+            title="Click to toggle between Simple & Advanced view mode"
           >
-            <Send className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">Delegate</span>
-            {delegationInbox.length > 0 && (
-              <span className="flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-bold bg-amber-500 text-obsidian-950 rounded-full px-1 animate-pulse">
-                {delegationInbox.length}
-              </span>
-            )}
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span>{isAdvanced ? 'Advanced' : 'Simple'}</span>
           </button>
 
-          {/* Stealth Mode Toggle */}
-          <button
-            onClick={toggleStealthMode}
-            className={`p-2 rounded-lg border text-xs transition-colors ${
-              stealthMode 
-                ? 'bg-amber-500/10 border-amber-500/40 text-amber-300' 
-                : 'bg-obsidian-900 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-            title={stealthMode ? 'Stealth Mode Active (Content Hidden)' : 'Enable Stealth Mode for Meetings'}
-          >
-            {stealthMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
-          </button>
+          {/* Personal Delegation / Sharing Button (Active on Personal Profile) */}
+          {!isWork && (
+            <button
+              onClick={onOpenDelegation}
+              className="relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-950/40 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 hover:text-white transition-all shadow-sm"
+              title="Share delegation link so family/friends can drop personal tasks"
+            >
+              <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Share / Delegate</span>
+              {delegationInbox.length > 0 && (
+                <span className="flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-bold bg-amber-500 text-obsidian-950 rounded-full px-1 animate-pulse">
+                  {delegationInbox.length}
+                </span>
+              )}
+            </button>
+          )}
 
-          {/* Settings / Security Audit */}
+          {/* Desktop Island View Toggle (in Advanced Mode) */}
+          {isAdvanced && (
+            <button
+              onClick={() => setViewMode(viewMode === 'floating_island' ? 'workspace' : 'floating_island')}
+              className={`p-2 rounded-lg border text-xs transition-colors ${
+                viewMode === 'floating_island'
+                  ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
+                  : 'bg-obsidian-900 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title="Toggle Desktop Spotlight Island"
+            >
+              <Layers className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Stealth Mode (in Advanced Mode) */}
+          {isAdvanced && (
+            <button
+              onClick={toggleStealthMode}
+              className={`p-2 rounded-lg border text-xs transition-colors ${
+                stealthMode 
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300' 
+                  : 'bg-obsidian-900 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title={stealthMode ? 'Stealth Mode Active' : 'Enable Stealth Mode for Meetings'}
+            >
+              {stealthMode ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
+            </button>
+          )}
+
+          {/* Settings & Mode Switcher */}
           <button
             onClick={onOpenSettings}
             className="p-2 rounded-lg bg-obsidian-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
-            title="Settings & Cryptographic Vault"
+            title="Settings & UI Mode"
           >
             <Settings className="w-4 h-4" />
           </button>

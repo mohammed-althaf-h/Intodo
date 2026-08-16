@@ -4,6 +4,8 @@ export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 
+export type UIMode = 'simple' | 'advanced';
+
 export interface Subtask {
   id: string;
   title: string;
@@ -23,7 +25,7 @@ export interface TaskItem {
   estimatedMinutes?: number;
   createdAt: number;
   completedAt?: number;
-  delegatedBy?: string; // Name of colleague if delegated
+  delegatedBy?: string; // Name of sender if delegated
   delegatedNote?: string;
   subtasks: Subtask[];
 }
@@ -35,13 +37,6 @@ export interface DelegatedTaskPayload {
   dueDate?: string;
   senderName: string;
   note?: string;
-}
-
-export interface VaultMetadata {
-  profile: ProfileType;
-  taskCount: number;
-  lastUpdated: number;
-  encrypted: boolean;
 }
 
 export type ViewMode = 'workspace' | 'floating_island' | 'delegation_portal';
