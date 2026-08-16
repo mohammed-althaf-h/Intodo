@@ -2,9 +2,13 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    LogicalSize, Manager,
+    LogicalSize, Manager, PhysicalPosition,
 };
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+
+use std::sync::Mutex;
+
+static SAVED_COLLAPSED_POS: Mutex<Option<(i32, i32)>> = Mutex::new(None);
 
 // Invoked from overlay's "Open Board" button
 #[tauri::command]
@@ -18,11 +22,33 @@ fn show_main_window(app: tauri::AppHandle) {
 
 // Invoked from overlay when user opens / closes the AssistiveTouch panel
 #[tauri::command]
-fn set_overlay_size(app: tauri::AppHandle, collapsed: bool) {
+fn set_overlay_size(app: tauri::AppHandle, collapsed: bool) -> Result<(), String> {
     if let Some(win) = app.get_webview_window("overlay") {
-        let (w, h): (f64, f64) = if collapsed { (80.0, 80.0) } else { (340.0, 460.0) };
-        let _ = win.set_size(LogicalSize::new(w, h));
+        if collapsed {
+            // Restore the exact position where the dot was before expanding
+            if let Some((orig_x, orig_y)) = SAVED_COLLAPSED_POS.lock().unwrap().take() {
+                let _ = win.set_position(PhysicalPosition::new(orig_x, orig_y));
+            }
+            let _ = win.set_size(LogicalSize::new(56.0, 56.0));
+        } else {
+            // Expanding: save the current dot position
+            if let Ok(pos) = win.outer_position() {
+                *SAVED_COLLAPSED_POS.lock().unwrap() = Some((pos.x, pos.y));
+                
+                // If dot is too close to right edge, shift window left so 290px panel fits on screen
+                if let Ok(Some(monitor)) = win.current_monitor() {
+                    let sw = monitor.size().width as i32;
+                    let expanded_w = 290;
+                    if pos.x + expanded_w > sw - 8 {
+                        let new_x = (sw - expanded_w - 8).max(0);
+                        let _ = win.set_position(PhysicalPosition::new(new_x, pos.y));
+                    }
+                }
+            }
+            let _ = win.set_size(LogicalSize::new(290.0, 310.0));
+        }
     }
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
