@@ -15,7 +15,11 @@ import {
   Pause,
   RotateCcw,
   Sparkles,
-  Move
+  Move,
+  MessageSquare,
+  CheckCircle2,
+  Circle,
+  X
 } from 'lucide-react';
 
 export const FloatingIsland: React.FC = () => {
@@ -26,6 +30,9 @@ export const FloatingIsland: React.FC = () => {
     personalTasks, 
     addTask, 
     toggleTask,
+    addSubtask,
+    toggleSubtask,
+    deleteSubtask,
     setViewMode,
     isTimerRunning,
     timerSecondsRemaining,
@@ -38,6 +45,8 @@ export const FloatingIsland: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [quickPriority, setQuickPriority] = useState<Priority>('medium');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [subtaskInputs, setSubtaskInputs] = useState<Record<string, string>>({});
 
   // Dragging & Positioning State
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
@@ -117,6 +126,27 @@ export const FloatingIsland: React.FC = () => {
   const handleToggleTaskWithSound = (id: string) => {
     toggleTask(id);
     Sound.playComplete();
+  };
+
+  const handleAddSubtask = (taskId: string) => {
+    const text = subtaskInputs[taskId]?.trim();
+    if (!text) return;
+    addSubtask(taskId, text);
+    setSubtaskInputs((prev) => ({ ...prev, [taskId]: '' }));
+    Sound.playComplete();
+  };
+
+  const handleToggleSubtask = (taskId: string, subId: string) => {
+    toggleSubtask(taskId, subId);
+    Sound.playComplete();
+  };
+
+  const handleDeleteSubtask = (taskId: string, subId: string) => {
+    deleteSubtask(taskId, subId);
+  };
+
+  const toggleTaskExpanded = (taskId: string) => {
+    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
   };
 
   const snapToNotch = () => {
@@ -297,39 +327,133 @@ export const FloatingIsland: React.FC = () => {
             </form>
 
             {/* Top Tasks List */}
-            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
               {pendingTasks.length === 0 ? (
                 <div className="p-4 text-center text-xs text-slate-500">
                   All caught up! Type a task above.
                 </div>
               ) : (
-                pendingTasks.slice(0, 4).map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between gap-2 p-2 bg-obsidian-900/70 hover:bg-obsidian-900 rounded-lg border border-slate-800/80 text-xs group"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <button
-                        onClick={() => handleToggleTaskWithSound(task.id)}
-                        className="text-slate-500 hover:text-emerald-400 shrink-0"
-                        title="Mark Complete"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="truncate text-slate-200">{task.title}</span>
-                    </div>
+                pendingTasks.slice(0, 4).map((task) => {
+                  const isTaskExpanded = expandedTaskId === task.id;
+                  const taskSubtasks = task.subtasks || [];
+                  const completedSubs = taskSubtasks.filter((s) => s.completed).length;
 
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
-                      task.priority === 'urgent'
-                        ? 'bg-red-500/20 text-red-400'
-                        : task.priority === 'high'
-                        ? 'bg-amber-500/20 text-amber-400'
-                        : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      {task.priority}
-                    </span>
-                  </div>
-                ))
+                  return (
+                    <div
+                      key={task.id}
+                      className="rounded-lg border border-slate-800/80 bg-obsidian-900/70 overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between gap-2 p-2 hover:bg-obsidian-900 text-xs group">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <button
+                            onClick={() => handleToggleTaskWithSound(task.id)}
+                            className="text-slate-500 hover:text-emerald-400 shrink-0"
+                            title="Mark Complete"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <span
+                            onClick={() => toggleTaskExpanded(task.id)}
+                            className="truncate text-slate-200 cursor-pointer hover:text-white"
+                          >
+                            {task.title}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {taskSubtasks.length > 0 && (
+                            <button
+                              onClick={() => toggleTaskExpanded(task.id)}
+                              className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-slate-800 text-slate-300 border border-slate-700 hover:text-sky-300"
+                              title="View subtasks"
+                            >
+                              {completedSubs}/{taskSubtasks.length}
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => toggleTaskExpanded(task.id)}
+                            className={`p-1 rounded text-slate-400 hover:text-white ${
+                              isTaskExpanded ? 'text-sky-400 bg-sky-500/20' : ''
+                            }`}
+                            title={isTaskExpanded ? 'Hide subtasks' : 'Add/view subtasks'}
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                          </button>
+
+                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
+                            task.priority === 'urgent'
+                              ? 'bg-red-500/20 text-red-400'
+                              : task.priority === 'high'
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Subtasks Drawer in Floating Island */}
+                      {isTaskExpanded && (
+                        <div className="px-3 pb-2.5 pt-1 border-t border-slate-800/80 bg-black/30 space-y-2 animate-fade-in">
+                          {taskSubtasks.length > 0 && (
+                            <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
+                              {taskSubtasks.map((sub) => (
+                                <div
+                                  key={sub.id}
+                                  className="flex items-center justify-between gap-2 text-xs group/sub"
+                                >
+                                  <button
+                                    onClick={() => handleToggleSubtask(task.id, sub.id)}
+                                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                                  >
+                                    {sub.completed ? (
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                                    ) : (
+                                      <Circle className="w-3 h-3 text-slate-600 hover:text-slate-400 shrink-0" />
+                                    )}
+                                    <span className={`truncate text-[11px] ${sub.completed ? 'line-through text-slate-500' : 'text-slate-300'}`}>
+                                      {sub.title}
+                                    </span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteSubtask(task.id, sub.id)}
+                                    className="opacity-0 group-hover/sub:opacity-100 text-slate-500 hover:text-red-400 p-0.5"
+                                  >
+                                    <X className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={subtaskInputs[task.id] || ''}
+                              onChange={(e) => setSubtaskInputs((prev) => ({ ...prev, [task.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddSubtask(task.id);
+                                }
+                              }}
+                              placeholder="Add subtask... (Enter)"
+                              className="flex-1 bg-obsidian-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAddSubtask(task.id)}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-[11px] font-semibold"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
 

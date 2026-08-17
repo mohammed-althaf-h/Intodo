@@ -503,8 +503,8 @@ export const TaskWorkspace: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Meta Tags & Details (in Advanced Mode or if description exists) */}
-                      {(!isSimple || task.description) && (
+                      {/* Meta Tags & Details (in Advanced Mode or if description/subtasks exist) */}
+                      {(!isSimple || task.description || (task.subtasks && task.subtasks.length > 0)) && (
                         <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-slate-400">
                           {task.description && !stealthMode && (
                             <p className="text-xs text-slate-400 w-full mb-1">{task.description}</p>
@@ -523,12 +523,13 @@ export const TaskWorkspace: React.FC = () => {
                             </span>
                           ))}
 
-                          {!isSimple && task.subtasks.length > 0 && (
+                          {task.subtasks && task.subtasks.length > 0 && (
                             <button
                               onClick={() => toggleExpand(task.id)}
-                              className="flex items-center gap-1 text-slate-400 hover:text-slate-200 font-mono text-[10px]"
+                              className="flex items-center gap-1 text-slate-300 hover:text-white font-mono text-[10px] bg-slate-800/60 hover:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700/50 transition-colors"
+                              title="Toggle subtasks list"
                             >
-                              {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                              {isExpanded ? <ChevronDown className="w-3 h-3 text-sky-400" /> : <ChevronRight className="w-3 h-3" />}
                               <span>{task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length} subtasks</span>
                             </button>
                           )}
@@ -558,16 +559,18 @@ export const TaskWorkspace: React.FC = () => {
                       </button>
                     )}
 
-                    {/* Subtask Button (in Advanced Mode) */}
-                    {!isSimple && (
-                      <button
-                        onClick={() => toggleExpand(task.id)}
-                        className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
-                        title="Subtasks"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    {/* Subtask Button */}
+                    <button
+                      onClick={() => toggleExpand(task.id)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        isExpanded
+                          ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      }`}
+                      title={isExpanded ? 'Hide subtasks' : 'Add or view subtasks'}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </button>
 
                     {/* Delete Task */}
                     <button
@@ -580,23 +583,26 @@ export const TaskWorkspace: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Expanded Subtasks (in Advanced Mode) */}
-                {isExpanded && !isSimple && (
-                  <div className="mt-3 pt-3 border-t border-slate-800/80 space-y-2 pl-8 animate-fade-in">
+                {/* Expanded Subtasks (Both Simple and Advanced Mode) */}
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-slate-800/80 space-y-2 pl-4 sm:pl-8 animate-fade-in">
                     <div className="space-y-1.5">
-                      {task.subtasks.map((sub) => (
+                      {(task.subtasks || []).map((sub) => (
                         <div
                           key={sub.id}
-                          className="flex items-center justify-between gap-2 p-1.5 rounded bg-obsidian-950/70 border border-slate-800 text-xs"
+                          className="flex items-center justify-between gap-2 p-1.5 rounded bg-obsidian-950/70 border border-slate-800 text-xs hover:border-slate-700 transition-colors"
                         >
                           <button
-                            onClick={() => toggleSubtask(task.id, sub.id)}
+                            onClick={() => {
+                              toggleSubtask(task.id, sub.id);
+                              Sound.playComplete();
+                            }}
                             className="flex items-center gap-2 flex-1 text-left"
                           >
                             {sub.completed ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             ) : (
-                              <Circle className="w-3.5 h-3.5 text-slate-500" />
+                              <Circle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 shrink-0" />
                             )}
                             <span className={sub.completed ? 'line-through text-slate-500' : 'text-slate-200'}>
                               {sub.title}
@@ -605,7 +611,8 @@ export const TaskWorkspace: React.FC = () => {
 
                           <button
                             onClick={() => deleteSubtask(task.id, sub.id)}
-                            className="text-slate-500 hover:text-red-400 p-1"
+                            className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-800 transition-colors"
+                            title="Delete subtask"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -621,14 +628,17 @@ export const TaskWorkspace: React.FC = () => {
                           setNewSubtaskInputs((prev) => ({ ...prev, [task.id]: e.target.value }))
                         }
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleAddSubtask(task.id);
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddSubtask(task.id);
+                          }
                         }}
-                        placeholder="Add a subtask..."
-                        className="flex-1 bg-obsidian-950 border border-slate-800 rounded px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700"
+                        placeholder="Add a subtask... (Press Enter)"
+                        className="flex-1 bg-obsidian-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-colors"
                       />
                       <button
                         onClick={() => handleAddSubtask(task.id)}
-                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-medium"
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-white rounded-lg text-xs font-medium transition-all"
                       >
                         Add
                       </button>

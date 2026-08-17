@@ -35,17 +35,17 @@ fn set_overlay_size(app: tauri::AppHandle, collapsed: bool) -> Result<(), String
             if let Ok(pos) = win.outer_position() {
                 *SAVED_COLLAPSED_POS.lock().unwrap() = Some((pos.x, pos.y));
                 
-                // If dot is too close to right edge, shift window left so 290px panel fits on screen
+                // If dot is too close to right edge, shift window left so 296px panel fits on screen
                 if let Ok(Some(monitor)) = win.current_monitor() {
                     let sw = monitor.size().width as i32;
-                    let expanded_w = 290;
+                    let expanded_w = 296;
                     if pos.x + expanded_w > sw - 8 {
                         let new_x = (sw - expanded_w - 8).max(0);
                         let _ = win.set_position(PhysicalPosition::new(new_x, pos.y));
                     }
                 }
             }
-            let _ = win.set_size(LogicalSize::new(290.0, 310.0));
+            let _ = win.set_size(LogicalSize::new(296.0, 360.0));
         }
     }
     Ok(())

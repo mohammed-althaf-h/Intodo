@@ -286,7 +286,7 @@ export const useVaultStore = create<VaultState>((set, get) => {
             title,
             completed: false,
           };
-          return { ...t, subtasks: [...t.subtasks, newSub] };
+          return { ...t, subtasks: [...(t.subtasks || []), newSub] };
         }
         return t;
       });
@@ -303,7 +303,7 @@ export const useVaultStore = create<VaultState>((set, get) => {
         if (t.id === taskId) {
           return {
             ...t,
-            subtasks: t.subtasks.map((s) =>
+            subtasks: (t.subtasks || []).map((s) =>
               s.id === subtaskId ? { ...s, completed: !s.completed } : s
             ),
           };
@@ -323,7 +323,7 @@ export const useVaultStore = create<VaultState>((set, get) => {
         if (t.id === taskId) {
           return {
             ...t,
-            subtasks: t.subtasks.filter((s) => s.id !== subtaskId),
+            subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
           };
         }
         return t;

@@ -9,6 +9,7 @@ import { Sound } from '../services/soundEngine';
 import {
   Check, Plus, Play, Pause, RotateCcw, Maximize2,
   Briefcase, User, X, ChevronRight,
+  MessageSquare, CheckCircle2, Circle
 } from 'lucide-react';
 
 // ── Urgency color based on highest priority pending task ──────────────────────
@@ -60,6 +61,7 @@ export const FloatingOverlay: React.FC = () => {
     activeProfile, switchProfile,
     workTasks, personalTasks,
     addTask, toggleTask,
+    addSubtask, toggleSubtask, deleteSubtask,
     isTimerRunning, timerSecondsRemaining, activeTimerTaskId,
     startTimer, pauseTimer, resetTimer,
     tickTimer,
@@ -70,6 +72,8 @@ export const FloatingOverlay: React.FC = () => {
   const [pulse, setPulse] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [quickPriority, setQuickPriority] = useState<Priority>('medium');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [subtaskInput, setSubtaskInput] = useState('');
   const idleTimer = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevPendingCount = useRef<number>(-1);
@@ -181,6 +185,27 @@ export const FloatingOverlay: React.FC = () => {
     `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
   const handleToggle = (id: string) => { toggleTask(id); Sound.playComplete(); };
+
+  const handleAddSubtask = (taskId: string) => {
+    if (!subtaskInput.trim()) return;
+    addSubtask(taskId, subtaskInput.trim());
+    setSubtaskInput('');
+    Sound.playComplete();
+  };
+
+  const handleToggleSubtask = (taskId: string, subId: string) => {
+    toggleSubtask(taskId, subId);
+    Sound.playComplete();
+  };
+
+  const handleDeleteSubtask = (taskId: string, subId: string) => {
+    deleteSubtask(taskId, subId);
+  };
+
+  const toggleTaskExpanded = (taskId: string) => {
+    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
+    setSubtaskInput('');
+  };
 
   const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -375,8 +400,8 @@ export const FloatingOverlay: React.FC = () => {
             </button>
           </form>
 
-          {/* ── Task list (compact) ── */}
-          <div className="space-y-1 max-h-[140px] overflow-y-auto">
+          {/* ── Task list (compact with subtasks support) ── */}
+          <div className="space-y-1.5 max-h-[170px] overflow-y-auto pr-0.5">
             {pending.length === 0 ? (
               <p className="text-[11px] text-slate-500 text-center py-2">All tasks completed! 🎉</p>
             ) : (
@@ -384,37 +409,135 @@ export const FloatingOverlay: React.FC = () => {
                 const priorityDot: Record<string, string> = {
                   urgent: '#f87171', high: '#fb923c', medium: '#facc15', low: '#34d399',
                 };
+                const isTaskExpanded = expandedTaskId === task.id;
+                const taskSubtasks = task.subtasks || [];
+                const completedSubs = taskSubtasks.filter((s) => s.completed).length;
+
                 return (
                   <div
                     key={task.id}
-                    className="flex items-center gap-2 group rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
+                    className="rounded-lg border border-transparent transition-colors hover:border-slate-800/80 bg-white/[0.02]"
                   >
-                    <button
-                      onClick={() => handleToggle(task.id)}
-                      className="w-3.5 h-3.5 rounded border border-slate-700 group-hover:border-emerald-500 flex items-center justify-center shrink-0 transition-colors"
-                    >
-                      <Check className="w-2 h-2 text-transparent group-hover:text-emerald-400 transition-colors" />
-                    </button>
-
-                    <div
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ background: priorityDot[task.priority ?? 'medium'] ?? '#64748b' }}
-                    />
-
-                    <span className="flex-1 text-[11px] text-slate-300 truncate">{task.title}</span>
-
-                    {task.id !== activeTimerTaskId ? (
+                    <div className="flex items-center gap-1.5 group px-2 py-1.5 transition-colors hover:bg-white/5 rounded-lg">
                       <button
-                        onClick={() => startTimer(task.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
-                        title="Start timer"
+                        onClick={() => handleToggle(task.id)}
+                        className="w-3.5 h-3.5 rounded border border-slate-700 group-hover:border-emerald-500 flex items-center justify-center shrink-0 transition-colors"
                       >
-                        <Play className="w-2.5 h-2.5 text-slate-400 hover:text-sky-400" />
+                        <Check className="w-2 h-2 text-transparent group-hover:text-emerald-400 transition-colors" />
                       </button>
-                    ) : (
-                      <span className="text-[9px] font-mono font-semibold" style={{ color: dotColor }}>
-                        {formatTime(timerSecondsRemaining)}
+
+                      <div
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: priorityDot[task.priority ?? 'medium'] ?? '#64748b' }}
+                      />
+
+                      <span
+                        onClick={() => toggleTaskExpanded(task.id)}
+                        className="flex-1 text-[11px] text-slate-300 truncate cursor-pointer hover:text-white"
+                        title={task.title}
+                      >
+                        {task.title}
                       </span>
+
+                      {/* Subtask count pill if has subtasks */}
+                      {taskSubtasks.length > 0 && (
+                        <button
+                          onClick={() => toggleTaskExpanded(task.id)}
+                          className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-slate-800/80 text-slate-400 hover:text-sky-300 border border-slate-700/50"
+                          title="View subtasks"
+                        >
+                          {completedSubs}/{taskSubtasks.length}
+                        </button>
+                      )}
+
+                      {/* Subtask expand button */}
+                      <button
+                        onClick={() => toggleTaskExpanded(task.id)}
+                        className={`p-0.5 rounded transition-all ${
+                          isTaskExpanded
+                            ? 'text-sky-400 bg-sky-500/10'
+                            : 'text-slate-500 hover:text-slate-200 opacity-0 group-hover:opacity-100'
+                        }`}
+                        title={isTaskExpanded ? 'Hide subtasks' : 'Add or view subtasks'}
+                      >
+                        <MessageSquare className="w-2.5 h-2.5" />
+                      </button>
+
+                      {task.id !== activeTimerTaskId ? (
+                        <button
+                          onClick={() => startTimer(task.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                          title="Start timer"
+                        >
+                          <Play className="w-2.5 h-2.5 text-slate-400 hover:text-sky-400" />
+                        </button>
+                      ) : (
+                        <span className="text-[9px] font-mono font-semibold" style={{ color: dotColor }}>
+                          {formatTime(timerSecondsRemaining)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Nested Subtasks Drawer */}
+                    {isTaskExpanded && (
+                      <div className="px-2.5 pb-2 pt-1 border-t border-slate-800/60 space-y-1.5 bg-black/20 rounded-b-lg animate-fade-in">
+                        {taskSubtasks.length > 0 && (
+                          <div className="space-y-1 max-h-[90px] overflow-y-auto pr-0.5">
+                            {taskSubtasks.map((sub) => (
+                              <div
+                                key={sub.id}
+                                className="flex items-center justify-between gap-1.5 py-0.5 text-[10px] text-slate-300 group/sub"
+                              >
+                                <button
+                                  onClick={() => handleToggleSubtask(task.id, sub.id)}
+                                  className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
+                                >
+                                  {sub.completed ? (
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                                  ) : (
+                                    <Circle className="w-3 h-3 text-slate-600 hover:text-slate-400 shrink-0" />
+                                  )}
+                                  <span className={`truncate ${sub.completed ? 'line-through text-slate-500' : 'text-slate-300'}`}>
+                                    {sub.title}
+                                  </span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSubtask(task.id, sub.id)}
+                                  className="opacity-0 group-hover/sub:opacity-100 text-slate-600 hover:text-red-400 transition-opacity p-0.5"
+                                  title="Delete subtask"
+                                >
+                                  <X className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Inline Add Subtask input */}
+                        <div className="flex items-center gap-1 pt-0.5">
+                          <input
+                            type="text"
+                            value={subtaskInput}
+                            onChange={(e) => setSubtaskInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddSubtask(task.id);
+                              }
+                            }}
+                            placeholder="Add subtask… Enter"
+                            className="flex-1 bg-slate-900/80 border border-slate-800 rounded px-2 py-0.5 text-[10px] text-slate-200 placeholder-slate-600 outline-none focus:border-sky-500/50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAddSubtask(task.id)}
+                            className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                            title="Add subtask"
+                          >
+                            <Plus className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
